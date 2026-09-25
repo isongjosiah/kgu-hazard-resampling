@@ -19,6 +19,9 @@ version: 1
 inventories:
 
   # --- Tier 1 -----------------------------------------------------------------
+  # In use: GE-LUCAS (open). The two African gully datasets below are requested
+  # from the Vanmaercke group (KU Leuven) and join Tier 1 only if they arrive in
+  # time. Until then, Africa is covered by the Nigerian flood events (Tier 2).
 
   ge_lucas:
     name: GE-LUCAS v1.1
@@ -87,6 +90,37 @@ inventories:
       unmapped places inside each site could serve as absences; change
       real_absences to within_footprint only after confirming each site was
       mapped completely. File names are placeholders until the data arrive.
+
+  chen_gully_sites_africa:
+    name: Global gully occurrence sites, African subset (Chen et al. 2025)
+    hazard: gully
+    region: Africa (subset of 17,499 sites worldwide)
+    tier: 1
+    status: on_request
+    loader: vector
+    citation: "Chen, De Geeter, Poesen, Matthews, Campforts, Borrelli, ... & Vanmaercke 2025, International Soil and Water Conservation Research, doi:10.1016/j.iswcr.2025.09.004"
+    licence: "to confirm with the authors (the published maps are CC-BY-4.0)"
+    real_absences: observed
+    label_support: "1 km2 site split into 9 cells (~330 m); each cell scored 0 (no gully heads), 1 (1-5), 2 (6-20) or 3 (>20)"
+    crs: "ESRI:102022"   # Africa Albers Equal Area Conic
+    files:
+      features:
+        path: chen_gully_sites_africa/sites.gpkg
+        note: "site cells with scores; request from the authors (KU Leuven)"
+    options:
+      geometry: any
+      # Column name and codes are placeholders until the data arrive.
+      label_column: score
+      presence_values: ["1", "2", "3"]
+      absence_values: ["0"]
+      keep_columns: [score]
+    notes: >
+      The public repository (KU Leuven RDR, doi:10.48804/BASVNF) holds only the
+      predicted 1 km maps, which are model output and cannot be labels. The
+      observed site scores would give Africa real "no gully" observations, so
+      calibration results would no longer be Europe-only. The labels are coarse
+      (~330 m cells), so how they reach the 30 m grid is part of the resampling
+      question, as for floods.
 
   # --- Tier 2 -----------------------------------------------------------------
 

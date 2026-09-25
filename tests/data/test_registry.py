@@ -22,7 +22,11 @@ def test_repo_registry_is_valid(repo_registry):
 
 def test_tiers_match_the_study_design(repo_registry):
     reg = load_registry(repo_registry)
-    assert [k for k, c in reg.items() if c.tier == 1] == ["ge_lucas", "de_geeter_africa"]
+    tier1 = {k: c for k, c in reg.items() if c.tier == 1}
+    assert set(tier1) == {"ge_lucas", "de_geeter_africa", "chen_gully_sites_africa"}
+    # only GE-LUCAS is open; the African gully datasets are requested from the authors
+    assert [k for k, c in tier1.items() if c.status == "open"] == ["ge_lucas"]
+    assert reg["chen_gully_sites_africa"].real_absences is AbsenceKind.OBSERVED
     assert reg["ge_lucas"].real_absences is AbsenceKind.OBSERVED
     assert reg["de_geeter_africa"].real_absences is AbsenceKind.NONE
 

@@ -51,11 +51,19 @@ uv run hazres data inspect ge_lucas  # load it and report what was kept and drop
 | Tier | Dataset | Hazard, region | "No hazard" labels | Access |
 |---|---|---|---|---|
 | 1 | GE-LUCAS v1.1 (Borrelli et al. 2025) | Gullies, EU | Observed | Open (Figshare) |
-| 1 | De Geeter et al. 2023 | Gullies, Africa | None (presence only) | On request from the authors |
+| 1 (requested) | De Geeter et al. 2023 gully heads | Gullies, Africa | None (presence only) | Requested from the authors |
+| 1 (requested) | Chen et al. 2025 site observations, African subset | Gullies, Africa | Observed (~330 m cells) | Requested from the authors |
 | 2 | Kahramanmaraş 2023 (Yılmaz et al. 2026) | Landslides, Türkiye | Inside the mapped area only | Open (Zenodo) |
 | 2 | Global Flood Database v1 (Tellman et al. 2021) | Floods, Nigeria | Partial (misses floods under cloud) | Earth Engine export |
 
 Tier 1 is always done. Tier 2 only if the week-1 pilot says go.
+
+**African gullies (backup plan).** No open Africa-wide gully dataset exists. Both
+African gully datasets come from the Vanmaercke group (KU Leuven) and have been
+requested. Until they arrive, Tier 1 is GE-LUCAS alone and Africa is covered by
+the Nigerian flood events. If they arrive in time, they join Tier 1. The public
+repository for Chen et al. 2025 (doi:10.48804/BASVNF) holds only predicted 1 km
+maps, which are model output and cannot be used as labels.
 
 ### Not used for now (to revisit)
 
