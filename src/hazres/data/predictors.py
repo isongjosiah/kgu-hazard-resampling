@@ -167,7 +167,7 @@ class Layer:
 
     def describe(self) -> str:
         h, w = self.values.shape
-        crs = self.crs.to_string() if hasattr(self.crs, "to_string") else str(self.crs)
+        crs = _crs_label(self.crs)
         lines = [
             f"{self.key}: {h:,} x {w:,} native cells, cell {self.res[0]:.6g} x {self.res[1]:.6g} "
             f"({crs}), {self.missing.mean():.1%} missing"
@@ -181,6 +181,18 @@ class Layer:
             top = sorted(zip(counts, classes, strict=True), reverse=True)[:8]
             lines.append("  classes: " + ", ".join(f"{c} ({n / valid.size:.0%})" for n, c in top))
         return "\n".join(lines)
+
+
+def _crs_label(crs) -> str:
+    """Short CRS name for reports: the EPSG code if there is one, else the CRS name."""
+    from pyproj import CRS
+
+    try:
+        c = CRS.from_user_input(crs.to_wkt() if hasattr(crs, "to_wkt") else crs)
+    except Exception:  # an unusual CRS should not break a report
+        return str(crs)[:60]
+    code = c.to_epsg()
+    return f"EPSG:{code}" if code else c.name
 
 
 @dataclass

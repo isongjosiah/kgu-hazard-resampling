@@ -155,7 +155,7 @@ layers:
     status: open
     access: url
     url: https://files.isric.org/soilgrids/latest/data/clay/clay_0-5cm_mean.vrt
-    scale: 0.1         # stored as g/kg; 0.1 gives % (confirm)
+    scale: 0.1         # stored as g/kg; 0.1 gives %. Confirmed: 25-42% near Córdoba
     nodata: -32768
 
   sand_0_5:

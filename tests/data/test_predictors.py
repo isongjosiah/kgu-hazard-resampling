@@ -258,3 +258,32 @@ def test_class_layers_cannot_be_averaged():
     with pytest.raises(ValueError, match="cannot be averaged"):
         warp_to_grid(layer, grid, "average")
     assert warp_to_grid(layer, grid, "mode").tolist() == [[0]]
+
+
+def test_describe_uses_a_short_crs_name():
+    from rasterio.crs import CRS
+
+    homolosine = CRS.from_wkt(
+        'PROJCS["Interrupted_Goode_Homolosine",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",'
+        'SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],'
+        'UNIT["Degree",0.0174532925199433]],PROJECTION["Interrupted_Goode_Homolosine"],'
+        'UNIT["metre",1]]'
+    )
+    layer = Layer(
+        "c",
+        Kind.CONTINUOUS,
+        np.ones((2, 2), dtype=np.float32),
+        from_origin(0, 500, 250, 250),
+        homolosine,
+        "%",
+    )
+    assert "(Interrupted_Goode_Homolosine)" in layer.describe()
+    layer = Layer(
+        "e",
+        Kind.CONTINUOUS,
+        np.ones((2, 2), dtype=np.float32),
+        from_origin(0, 1, 0.1, 0.1),
+        CRS.from_epsg(4326),
+        "m",
+    )
+    assert "(EPSG:4326)" in layer.describe()
