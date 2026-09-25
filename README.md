@@ -46,6 +46,45 @@ uv run hazres data fetch ge_lucas    # download into data/raw/ and print checksu
 uv run hazres data inspect ge_lucas  # load it and report what was kept and dropped
 ```
 
+### Datasets in use
+
+| Tier | Dataset | Hazard, region | "No hazard" labels | Access |
+|---|---|---|---|---|
+| 1 | GE-LUCAS v1.1 (Borrelli et al. 2025) | Gullies, EU | Observed | Open (Figshare) |
+| 1 | De Geeter et al. 2023 | Gullies, Africa | None (presence only) | On request from the authors |
+| 2 | Kahramanmaraş 2023 (Yılmaz et al. 2026) | Landslides, Türkiye | Inside the mapped area only | Open (Zenodo) |
+| 2 | Global Flood Database v1 (Tellman et al. 2021) | Floods, Nigeria | Partial (misses floods under cloud) | Earth Engine export |
+
+Tier 1 is always done. Tier 2 only if the week-1 pilot says go.
+
+### Not used for now (to revisit)
+
+**Deferred (Tier 3, in the registry without a loader):**
+
+- *MODIS burned area MCD64A1* (wildfire): fire depends strongly on the weather of a given year, so it fits a susceptibility question less well, and it is another data type (500 m monthly grids).
+- *Marche-Umbria 2022 landslides* (Italy): good data, but Europe is already covered by GE-LUCAS.
+- *Kivu–Tanganyika Rift landslides* (East Africa): presence only, and it is unclear what is released. Worth adding for African coverage if the data become available.
+
+The reason for all three is time: more hazards means less care for each within five weeks.
+
+**For breadth in a follow-up (open, not in the registry):**
+
+- Chile 2010 earthquake landslides (Serey & Sepúlveda 2024)
+- Indonesia cyclone landslides benchmark (Samodra et al. 2025)
+- China 2024 rainfall landslides (Fu et al. 2025)
+- Global database of ~400,000 earthquake-triggered landslides (Fan et al. 2025; availability to confirm)
+
+**Hazards ruled out:**
+
+- *Groundwater potential*: not a hazard; the labels are productive wells.
+- *Subsidence*: few open inventories, and the drivers (pumping, radar measurements) are a different kind of predictor.
+- *Drought*: covers whole areas over time, not specific sites.
+
+**Parts of included datasets not used as labels:**
+
+- *GE-LUCAS probability map*: a model output, not an observation. Possible comparison later.
+- *GE-LUCAS cross-check point sets*: checks of the survey against imagery. Could later estimate how many gullies the survey missed.
+
 ## Licence
 
 MIT. Datasets keep their own licences; see `configs/`.
