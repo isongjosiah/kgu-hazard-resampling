@@ -3,7 +3,9 @@ name = "hazres-grid"
 description = "Grid engine for hazres: resampling methods and conditional fine-scale realisations"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 
 [dependencies]
+rayon = "1.12.0"

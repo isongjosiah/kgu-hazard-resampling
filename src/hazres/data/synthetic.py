@@ -84,6 +84,29 @@ class SyntheticStudy:
     def spec(self, name: str) -> LayerSpec:
         return next(s for s in self.layers if s.name == name)
 
+    @property
+    def grid(self):
+        """The analysis grid the truth is on."""
+        from hazres.grid.spec import GridSpec
+
+        h, w = self.shape
+        t = self.transform
+        return GridSpec(
+            self.crs, self.cell_size, t.c, t.f - h * self.cell_size, t.c + w * self.cell_size, t.f
+        )
+
+    def layer(self, name: str):
+        """A layer as a user would download it: native resolution, as a predictor Layer."""
+        from hazres.data.predictors import Kind, Layer
+
+        s = self.spec(name)
+        kind = Kind.CONTINUOUS if s.kind == "continuous" else Kind.CLASSES
+        dtype = np.float32 if kind is Kind.CONTINUOUS else np.int32
+        return Layer(
+            name, kind, self.observed[name].astype(dtype), self.observed_transform(name),
+            self.crs, "synthetic",
+        )  # fmt: skip
+
 
 def gaussian_field(shape: tuple[int, int], correlation_cells: float, rng) -> np.ndarray:
     """A smooth random field with mean 0 and standard deviation 1 (FFT, periodic edges)."""
