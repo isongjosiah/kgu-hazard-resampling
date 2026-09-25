@@ -46,22 +46,37 @@ uv run hazres data fetch ge_lucas    # download into data/raw/ and print checksu
 uv run hazres data inspect ge_lucas  # load it and report what was kept and dropped
 ```
 
+The Nigerian flood events come from Google Earth Engine (free for research):
+
+```bash
+uv sync --extra gee
+uv run earthengine authenticate                        # once
+uv run hazres data export-gfd --project YOUR_GCP_PROJECT
+uv run hazres data inspect global_flood_database
+```
+
+Events are exported at 250 m (the MODIS observation size) in UTM 32N, clipped to
+Nigeria. If an event is too large for direct download, rerun with
+`--method drive` and move the files from Google Drive into
+`data/raw/global_flood_database/nigeria/`.
+
 ### Datasets in use
 
 | Tier | Dataset | Hazard, region | "No hazard" labels | Access |
 |---|---|---|---|---|
 | 1 | GE-LUCAS v1.1 (Borrelli et al. 2025) | Gullies, EU | Observed | Open (Figshare) |
+| 1 | Global Flood Database v1 (Tellman et al. 2021) | Floods, Nigeria | Partial (misses floods under cloud) | Earth Engine export |
 | 1 (requested) | De Geeter et al. 2023 gully heads | Gullies, Africa | None (presence only) | Requested from the authors |
 | 1 (requested) | Chen et al. 2025 site observations, African subset | Gullies, Africa | Observed (~330 m cells) | Requested from the authors |
 | 2 | Kahramanmaraş 2023 (Yılmaz et al. 2026) | Landslides, Türkiye | Inside the mapped area only | Open (Zenodo) |
-| 2 | Global Flood Database v1 (Tellman et al. 2021) | Floods, Nigeria | Partial (misses floods under cloud) | Earth Engine export |
 
 Tier 1 is always done. Tier 2 only if the week-1 pilot says go.
 
 **African gullies (backup plan).** No open Africa-wide gully dataset exists. Both
 African gully datasets come from the Vanmaercke group (KU Leuven) and have been
-requested. Until they arrive, Tier 1 is GE-LUCAS alone and Africa is covered by
-the Nigerian flood events. If they arrive in time, they join Tier 1. The public
+requested. Until they arrive, Africa is covered by the Nigerian flood events,
+which are in Tier 1 so the paper has an African case even if the pilot says
+no-go. If the gully data arrive in time, they join Tier 1. The public
 repository for Chen et al. 2025 (doi:10.48804/BASVNF) holds only predicted 1 km
 maps, which are model output and cannot be used as labels.
 

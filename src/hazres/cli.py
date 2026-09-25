@@ -32,6 +32,21 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--force", action="store_true", help="download again even if present")
     inspect = data_sub.add_parser("inspect", help="load a dataset and report what was kept")
     inspect.add_argument("key")
+    gfd = data_sub.add_parser(
+        "export-gfd",
+        help="export Global Flood Database events for a country from Earth Engine",
+        description="Needs: uv sync --extra gee, and uv run earthengine authenticate once.",
+    )
+    gfd.add_argument(
+        "--country", default="Nigeria", help="country name as in LSIB (default Nigeria)"
+    )
+    gfd.add_argument("--iso3", default="NGA", help="ISO3 code used by the flood database")
+    gfd.add_argument("--scale", type=float, default=250.0, help="cell size in m (default 250)")
+    gfd.add_argument("--crs", default="EPSG:32632", help="projected CRS (default UTM 32N)")
+    gfd.add_argument("--method", choices=["download", "drive"], default="download")
+    gfd.add_argument("--drive-folder", default="hazres_gfd")
+    gfd.add_argument("--project", help="Google Cloud project registered for Earth Engine")
+    gfd.add_argument("--force", action="store_true", help="export again even if the file exists")
     return parser
 
 
@@ -50,6 +65,28 @@ def _data(args: argparse.Namespace) -> int:
                 f"{cfg.real_absences.value:<18}{files}"
             )
         return 0
+
+    if args.data_command == "export-gfd":
+        from hazres.data.gee import export_gfd
+
+        out_dir = args.data_root / "global_flood_database" / args.country.lower().replace(" ", "_")
+        results = export_gfd(
+            out_dir,
+            country_name=args.country,
+            iso3=args.iso3,
+            scale=args.scale,
+            crs=args.crs,
+            method=args.method,
+            drive_folder=args.drive_folder,
+            project=args.project,
+            skip_existing=not args.force,
+        )
+        failed = 0
+        for job, status in results:
+            print(f"{job.filename:<20}{status}")
+            failed += status.startswith("failed")
+        print(f"{len(results)} events, {failed} failed; manifest: {out_dir / 'events.csv'}")
+        return 1 if failed else 0
 
     if args.key not in reg:
         print(f"unknown dataset {args.key!r}; known: {', '.join(sorted(reg))}", file=sys.stderr)
@@ -83,7 +120,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "data":
             return _data(args)
-    except (FileNotFoundError, KeyError, ValueError, NotImplementedError) as exc:
+    except (
+        FileNotFoundError,
+        KeyError,
+        ValueError,
+        NotImplementedError,
+        ImportError,
+        RuntimeError,
+    ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     return 0

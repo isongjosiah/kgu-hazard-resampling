@@ -19,9 +19,9 @@ version: 1
 inventories:
 
   # --- Tier 1 -----------------------------------------------------------------
-  # In use: GE-LUCAS (open). The two African gully datasets below are requested
-  # from the Vanmaercke group (KU Leuven) and join Tier 1 only if they arrive in
-  # time. Until then, Africa is covered by the Nigerian flood events (Tier 2).
+  # In use: GE-LUCAS (gullies, EU) and the Nigerian flood events (Africa), both
+  # open. The two African gully datasets are requested from the Vanmaercke group
+  # (KU Leuven) and join Tier 1 only if they arrive in time.
 
   ge_lucas:
     name: GE-LUCAS v1.1
@@ -122,6 +122,37 @@ inventories:
       (~330 m cells), so how they reach the 30 m grid is part of the resampling
       question, as for floods.
 
+  global_flood_database:
+    name: Global Flood Database v1 (Nigerian events)
+    hazard: flood
+    region: Nigeria
+    tier: 1
+    status: open
+    loader: flood_raster
+    citation: "Tellman et al. 2021, Nature, doi:10.1038/s41586-021-03695-w"
+    licence: CC-BY-NC-4.0
+    real_absences: partial
+    label_support: "MODIS 250 m (served by Earth Engine on a 30 m grid; exported at 250 m)"
+    files:
+      events:
+        path: global_flood_database/nigeria/DFO_*.tif
+        note: >
+          Export from Earth Engine with: uv run hazres data export-gfd
+          (one-time setup: uv sync --extra gee; uv run earthengine authenticate)
+      manifest:
+        path: global_flood_database/nigeria/events.csv
+        required: false
+        note: "event dates, cause and impact; written by export-gfd"
+    options:
+      min_clear_perc: 50
+      # export-gfd writes the bands in this order
+      band_order: [flooded, clear_perc, jrc_perm_water]
+    notes: >
+      Floods that were short or under cloud are missed, so a 0 is weaker than
+      in GE-LUCAS. Labels are coarse (250 m), so how they reach the 30 m grid
+      is part of the resampling question. Promoted to Tier 1 so the paper has an
+      African case even if the pilot says no-go and the gully data do not arrive.
+
   # --- Tier 2 -----------------------------------------------------------------
 
   kahramanmaras_2023:
@@ -152,31 +183,6 @@ inventories:
       Absences are only valid inside the systematically mapped area, so the
       footprint is needed before training. Earthquake shaking (PGA) is an extra
       predictor for this case.
-
-  global_flood_database:
-    name: Global Flood Database v1 (Nigerian events)
-    hazard: flood
-    region: Nigeria
-    tier: 2
-    status: open
-    loader: flood_raster
-    citation: "Tellman et al. 2021, Nature, doi:10.1038/s41586-021-03695-w"
-    licence: CC-BY-NC-4.0
-    real_absences: partial
-    label_support: "MODIS 250 m, served by Earth Engine on a 30 m grid"
-    files:
-      events:
-        path: global_flood_database/nigeria/*.tif
-        note: >
-          Export each Nigerian event from Earth Engine collection
-          GLOBAL_FLOOD_DB/MODIS_EVENTS/V1 (filter cc contains NGA) with bands
-          flooded, clear_perc, jrc_perm_water, one GeoTIFF per event.
-    options:
-      min_clear_perc: 50
-    notes: >
-      Floods that were short or under cloud are missed, so a 0 is weaker than
-      in GE-LUCAS. Labels are coarse (250 m), so how they reach the 30 m grid
-      is part of the resampling question.
 
   # --- Tier 3 (follow-up; listed so the registry is complete) -------------------
 
