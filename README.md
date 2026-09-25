@@ -36,6 +36,16 @@ uv run hazres --version
 
 After changing Rust code, `uv run` rebuilds the engine automatically. `make dev` forces a rebuild.
 
+## Data
+
+Hazard datasets are listed in `configs/inventories.yaml`.
+
+```bash
+uv run hazres data list              # every dataset, its tier, and whether its files are present
+uv run hazres data fetch ge_lucas    # download into data/raw/ and print checksums
+uv run hazres data inspect ge_lucas  # load it and report what was kept and dropped
+```
+
 ## Licence
 
 MIT. Datasets keep their own licences; see `configs/`.

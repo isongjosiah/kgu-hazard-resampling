@@ -1,0 +1,183 @@
+# Hazard inventories used by the study.
+#
+# Every entry is validated by hazres.data.registry.InventoryConfig. Paths are
+# relative to the data root (data/raw/ by default). Run `hazres data list` to
+# see what is present, `hazres data fetch KEY` to download, and
+# `hazres data inspect KEY` to load a dataset and print what was kept.
+#
+# real_absences — what a 0 label means, which decides what results a dataset
+# can support:
+#   observed          places inspected and found free of the hazard
+#   within_footprint  absences only inside the systematically mapped area
+#   partial           observed but incomplete (e.g. cloud)
+#   none              presence only; risk numbers cannot be checked
+#
+# Tiers: 1 always done; 2 if the week-1 pilot says go; 3 follow-up.
+
+version: 1
+
+inventories:
+
+  # --- Tier 1 -----------------------------------------------------------------
+
+  ge_lucas:
+    name: GE-LUCAS v1.1
+    hazard: gully
+    region: European Union
+    tier: 1
+    status: open
+    loader: ge_lucas
+    citation: "Borrelli et al. 2025, Scientific Data, doi:10.1038/s41597-025-05074-w"
+    licence: CC-BY-4.0
+    real_absences: observed
+    label_support: "LUCAS 2022 point; gullies visible from the point (median distance ~50 m)"
+    crs: EPSG:3035
+    files:
+      points:
+        path: ge_lucas/Data 1 - LUCAS2022 original.zip
+        url: https://ndownloader.figshare.com/files/53415074
+        note: "399,591 LUCAS 2022 points, 307 columns (~28 MB zipped)"
+      gully_points:
+        path: ge_lucas/Data 2 - LUCAS2022 with gully channels.zip
+        url: https://ndownloader.figshare.com/files/49748010
+        required: false
+        note: "the 3,116 points with gullies; used to cross-check the presence coding"
+      gully_locations:
+        path: ge_lucas/Data 3 - LUCAS2022 gully channel locations.zip
+        url: https://ndownloader.figshare.com/files/49748013
+        required: false
+        note: "where the gullies actually are, rather than the LUCAS point"
+    options:
+      presence_column: null    # null = the one column starting SURVEY_GUL
+      # Must be confirmed from the data on first load; the loader refuses to guess.
+      presence_values: []
+      absence_values: []
+      expected_presences: 3116
+      # Country and land cover, for leave-country-out folds. Names are a best guess
+      # from the shapefile fields; the loader warns about any it cannot find.
+      keep_columns: [POINT_NUTS0, SURVEY_LC1]
+    notes: >
+      Figshare doi:10.6084/m9.figshare.27211473. Also on ESDAC. A 0 means the
+      surveyor looked and saw no gully, so calibration results are valid here.
+
+  de_geeter_africa:
+    name: African gully heads (De Geeter et al. 2023)
+    hazard: gully
+    region: Africa (incl. south-east Nigeria)
+    tier: 1
+    status: on_request
+    loader: vector
+    citation: "De Geeter, Verstraeten, Poesen, Campforts & Vanmaercke 2023, Environmental Research, doi:10.1016/j.envres.2023.115573"
+    licence: "to confirm with the authors"
+    real_absences: none
+    label_support: "gully head point, expert-mapped on Google Earth imagery"
+    crs: "ESRI:102022"   # Africa Albers Equal Area Conic
+    files:
+      features:
+        path: de_geeter_africa/gully_heads.gpkg
+        note: "31,531 gully heads at 1,216 sites; request from the authors (KU Leuven)"
+      footprint:
+        path: de_geeter_africa/sites.gpkg
+        required: false
+        note: "the mapped site outlines, if the authors can share them"
+    options:
+      geometry: point
+    notes: >
+      Presence only as published. If the authors share the mapped site outlines,
+      unmapped places inside each site could serve as absences; change
+      real_absences to within_footprint only after confirming each site was
+      mapped completely. File names are placeholders until the data arrive.
+
+  # --- Tier 2 -----------------------------------------------------------------
+
+  kahramanmaras_2023:
+    name: Kahramanmaraş 2023 coseismic landslides
+    hazard: landslide
+    region: Türkiye
+    tier: 2
+    status: open
+    loader: vector
+    citation: "Yılmaz, Tanyas, Karabacak, Süzen & Gorum 2026, doi:10.31223/x54n3b; data doi:10.5281/zenodo.17662343"
+    licence: "CC-BY-4.0; the record also restricts use to non-commercial research"
+    real_absences: within_footprint
+    label_support: "full landslide polygon, mapped from 0.3 m aerial imagery"
+    crs: EPSG:32637   # UTM 37N
+    files:
+      features:
+        path: kahramanmaras_2023/Coseismic_Landslides_Inventory_2023_EQ_Turkiye.zip
+        url: https://zenodo.org/records/17662343/files/Coseismic_Landslides_Inventory_2023_EQ_Turkiye.zip?download=1
+        note: "20,270 landslide polygons (~21 MB)"
+      footprint:
+        path: kahramanmaras_2023/mapped_area.gpkg
+        required: false
+        note: "the ~80,000 km2 mapped area; check whether it is in the zip or must be requested"
+    options:
+      geometry: polygon
+      keep_columns: []   # add the movement and material type columns once their names are known
+    notes: >
+      Absences are only valid inside the systematically mapped area, so the
+      footprint is needed before training. Earthquake shaking (PGA) is an extra
+      predictor for this case.
+
+  global_flood_database:
+    name: Global Flood Database v1 (Nigerian events)
+    hazard: flood
+    region: Nigeria
+    tier: 2
+    status: open
+    loader: flood_raster
+    citation: "Tellman et al. 2021, Nature, doi:10.1038/s41586-021-03695-w"
+    licence: CC-BY-NC-4.0
+    real_absences: partial
+    label_support: "MODIS 250 m, served by Earth Engine on a 30 m grid"
+    files:
+      events:
+        path: global_flood_database/nigeria/*.tif
+        note: >
+          Export each Nigerian event from Earth Engine collection
+          GLOBAL_FLOOD_DB/MODIS_EVENTS/V1 (filter cc contains NGA) with bands
+          flooded, clear_perc, jrc_perm_water, one GeoTIFF per event.
+    options:
+      min_clear_perc: 50
+    notes: >
+      Floods that were short or under cloud are missed, so a 0 is weaker than
+      in GE-LUCAS. Labels are coarse (250 m), so how they reach the 30 m grid
+      is part of the resampling question.
+
+  # --- Tier 3 (follow-up; listed so the registry is complete) -------------------
+
+  mcd64a1_burned_area:
+    name: MODIS burned area MCD64A1
+    hazard: wildfire
+    region: global (e.g. southern Europe, West African savanna)
+    tier: 3
+    status: planned
+    loader: null
+    citation: "Giglio et al. 2018, Remote Sensing of Environment, doi:10.1016/j.rse.2018.08.005"
+    licence: "NASA open data"
+    real_absences: observed
+    label_support: "500 m monthly burned area"
+
+  marche_umbria_2022:
+    name: Marche-Umbria 2022 rainfall landslides
+    hazard: landslide
+    region: Italy
+    tier: 3
+    status: planned
+    loader: vector
+    citation: "Santangelo et al. 2023, Scientific Data, doi:10.1038/s41597-023-02336-3"
+    licence: "to confirm"
+    real_absences: within_footprint
+    label_support: "landslide polygon"
+
+  kivu_tanganyika_rift:
+    name: Kivu–Tanganyika Rift landslides
+    hazard: landslide
+    region: East Africa
+    tier: 3
+    status: planned
+    loader: vector
+    citation: "Monsieurs et al. 2018, Landslides, doi:10.1007/s10346-018-1008-y; Depicker et al. 2020, Geomorphology"
+    licence: "to confirm"
+    real_absences: none
+    label_support: "landslide point"
