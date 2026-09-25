@@ -7,16 +7,16 @@ zipped or unzipped). Each point was assessed for gully channels visible from
 the point, so a 0 is an *observed* absence, which is why this dataset can
 support calibration results.
 
-Two things the paper does not pin down, so this loader will not guess them:
+The CSV's record descriptor (``LUCAS-2022-record-descriptor.ods``, inside
+the zip) defines the gully question as ``SURVEY_GULLY_SIGNS``, "Can you see
+signs of gully erosion?", 1 = Yes, 2 = No. The registry sets this explicitly.
+Six columns start with ``SURVEY_GULLY_``, so the column is never guessed from
+a pattern when that name is present.
 
-* **The name of the gully presence column in the CSV.** The shapefiles
-  truncate it to ``SURVEY_GUL``. By default the loader takes the one column
-  whose name starts with ``SURVEY_GUL`` and fails if there are zero or several.
-  Set ``options.presence_column`` to override.
-* **How presence and absence are coded.** Until ``options.presence_values``
-  and ``options.absence_values`` are set, loading stops and prints the codes
-  found with their counts, so a person confirms the coding once. Values in
-  neither list (e.g. not assessed) are dropped and counted.
+The loader still refuses to run until ``options.presence_values`` and
+``options.absence_values`` are set, and prints the codes it found, so a change
+in a future release of the file cannot slip through. Values in neither list
+are dropped and counted.
 """
 
 from __future__ import annotations
@@ -36,6 +36,7 @@ from hazres.data.registry import InventoryConfig, register
 ID_COL = "POINT_ID"
 LAT_COL = "POINT_LAT"
 LON_COL = "POINT_LONG"
+PRESENCE_COLUMN = "SURVEY_GULLY_SIGNS"
 PRESENCE_PATTERN = re.compile(r"^SURVEY_GUL", re.IGNORECASE)
 
 
@@ -67,6 +68,8 @@ def _presence_column(columns: list[str], override: str | None) -> str:
         if override not in columns:
             raise KeyError(f"presence_column {override!r} not in CSV columns")
         return override
+    if PRESENCE_COLUMN in columns:
+        return PRESENCE_COLUMN
     hits = [c for c in columns if PRESENCE_PATTERN.match(c)]
     if len(hits) != 1:
         raise KeyError(

@@ -39,26 +39,34 @@ inventories:
       points:
         path: ge_lucas/Data 1 - LUCAS2022 original.zip
         url: https://ndownloader.figshare.com/files/53415074
+        sha256: c2b5838b06bd0883f00071b87d656fe5ff11dbb045181f1ccebc17e500934aae
         note: "399,591 LUCAS 2022 points, 307 columns (~28 MB zipped)"
       gully_points:
         path: ge_lucas/Data 2 - LUCAS2022 with gully channels.zip
         url: https://ndownloader.figshare.com/files/49748010
+        sha256: 663c6b983405860f048118487e6c25e9b91f8ea7db4ce3865cafaa126e18e0b9
         required: false
         note: "the 3,116 points with gullies; used to cross-check the presence coding"
       gully_locations:
         path: ge_lucas/Data 3 - LUCAS2022 gully channel locations.zip
         url: https://ndownloader.figshare.com/files/49748013
+        sha256: aa10e1e27887952d4e1460c83fae13ac360b85047de0f120a09a6a4cd50f816c
         required: false
         note: "where the gullies actually are, rather than the LUCAS point"
     options:
-      presence_column: null    # null = the one column starting SURVEY_GUL
-      # Must be confirmed from the data on first load; the loader refuses to guess.
-      presence_values: []
-      absence_values: []
+      # Confirmed from LUCAS-2022-record-descriptor.ods (inside the Data 1 zip):
+      # "Can you see signs of gully erosion?" 1 = Yes, 2 = No. Every point has an
+      # answer; 1 occurs 3,116 times, matching the paper.
+      presence_column: SURVEY_GULLY_SIGNS
+      presence_values: ["1"]
+      absence_values: ["2"]
       expected_presences: 3116
-      # Country and land cover, for leave-country-out folds. Names are a best guess
-      # from the shapefile fields; the loader warns about any it cannot find.
-      keep_columns: [POINT_NUTS0, SURVEY_LC1]
+      # POINT_NUTS0: country, for leave-country-out folds.
+      # SURVEY_OBS_TYPE: how the point was checked (1-2 field visit, 3 photo-
+      #   interpretation in the field, 7 photo-interpretation in the office);
+      #   about half are 7, so results should also be checked on field visits only.
+      # SURVEY_LC1: land cover. SURVEY_GULLY_TYPE: 1 ephemeral, 2 permanent, 3 badlands.
+      keep_columns: [POINT_NUTS0, SURVEY_OBS_TYPE, SURVEY_LC1, SURVEY_GULLY_TYPE]
     notes: >
       Figshare doi:10.6084/m9.figshare.27211473. Also on ESDAC. A 0 means the
       surveyor looked and saw no gully, so calibration results are valid here.

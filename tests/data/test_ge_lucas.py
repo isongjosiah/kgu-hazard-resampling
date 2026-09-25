@@ -7,14 +7,16 @@ from conftest import make_cfg, write_zip
 from hazres.data.inventories.ge_lucas import CodingNotConfirmedError
 from hazres.data.inventories.ge_lucas import load as load_ge_lucas
 
-HEADER = "POINT_ID,POINT_LAT,POINT_LONG,POINT_NUTS0,SURVEY_GULLY,SURVEY_LC1\n"
+HEADER = (
+    "POINT_ID,POINT_LAT,POINT_LONG,POINT_NUTS0,SURVEY_GULLY_SIGNS,SURVEY_GULLY_TYPE,SURVEY_LC1\n"
+)
 ROWS = [
-    "1001,48.1,11.5,DE,1,B11",
-    "1002,48.2,11.6,DE,2,B11",
-    "1003,41.9,12.5,IT,2,C10",
-    "1004,41.8,12.4,IT,8,C10",  # not assessed
-    "1005,,12.4,IT,1,C10",  # no coordinates
-    "1002,48.2,11.6,DE,2,B11",  # duplicate id
+    "1001,48.1,11.5,DE,1,2,B11",
+    "1002,48.2,11.6,DE,2,NA,B11",
+    "1003,41.9,12.5,IT,2,NA,C10",
+    "1004,41.8,12.4,IT,8,NA,C10",  # not a Yes/No answer
+    "1005,,12.4,IT,1,1,C10",  # no coordinates
+    "1002,48.2,11.6,DE,2,NA,B11",  # duplicate id
 ]
 
 
@@ -39,7 +41,7 @@ def test_refuses_to_guess_the_coding(root):
     with pytest.raises(CodingNotConfirmedError) as exc:
         load_ge_lucas(_cfg(), root)
     msg = str(exc.value)
-    assert "SURVEY_GULLY" in msg
+    assert "SURVEY_GULLY_SIGNS" in msg
     # every code is listed with its count, so a person can confirm the coding
     assert re.search(r"^2\s+3$", msg, re.MULTILINE)
     assert re.search(r"^8\s+1$", msg, re.MULTILINE)
@@ -73,8 +75,13 @@ def test_same_code_cannot_mean_both(root):
         load_ge_lucas(_cfg(presence_values=["1"], absence_values=["1", "2"]), root)
 
 
+def test_gully_signs_is_chosen_over_the_other_gully_columns(root):
+    labels = load_ge_lucas(_cfg(presence_values=["1"], absence_values=["2"]), root)
+    assert labels.meta["presence_column"] == "SURVEY_GULLY_SIGNS"
+
+
 def test_ambiguous_presence_column(tmp_path):
-    header = "POINT_ID,POINT_LAT,POINT_LONG,SURVEY_GULLY,SURVEY_GULLY_TYPE\n"
+    header = "POINT_ID,POINT_LAT,POINT_LONG,SURVEY_GULLY,SURVEY_GULLY_X\n"
     write_zip(tmp_path / "ge_lucas/points.zip", "x.csv", header + "1,48,11,1,2")
     with pytest.raises(KeyError, match="presence column"):
         load_ge_lucas(_cfg(presence_values=["1"], absence_values=["2"]), tmp_path)
