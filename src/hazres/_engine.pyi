@@ -1,0 +1,3 @@
+"""Type stubs for the Rust extension module built from crates/hazres-py."""
+
+def engine_version() -> str: ...

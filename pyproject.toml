@@ -1,0 +1,46 @@
+[build-system]
+requires = ["maturin>=1.8,<2"]
+build-backend = "maturin"
+
+[project]
+name = "hazres"
+version = "0.1.0"
+description = "Tests whether a hazard susceptibility map changes with how its predictors were resampled onto a common grid, beyond what chance alone would produce."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Josiah Ayoola Isong" }]
+dependencies = ["numpy>=1.26"]
+
+[project.scripts]
+hazres = "hazres.cli:main"
+
+[dependency-groups]
+dev = ["maturin>=1.8,<2", "pytest>=8", "ruff>=0.6"]
+
+[tool.maturin]
+manifest-path = "crates/hazres-py/Cargo.toml"
+python-source = "src"
+module-name = "hazres._engine"
+features = ["pyo3/extension-module"]
+
+[tool.uv]
+# Rebuild the Rust extension whenever Rust sources change.
+cache-keys = [
+  { file = "pyproject.toml" },
+  { file = "Cargo.toml" },
+  { file = "crates/**/Cargo.toml" },
+  { file = "crates/**/*.rs" },
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "NPY"]

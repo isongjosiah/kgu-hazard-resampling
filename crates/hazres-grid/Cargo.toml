@@ -1,0 +1,9 @@
+[package]
+name = "hazres-grid"
+description = "Grid engine for hazres: resampling methods and conditional fine-scale realisations"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]

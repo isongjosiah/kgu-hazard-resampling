@@ -1,0 +1,16 @@
+[package]
+name = "hazres-py"
+description = "Python bindings for the hazres grid engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+name = "_engine"
+crate-type = ["cdylib"]
+
+[dependencies]
+hazres-grid = { path = "../hazres-grid" }
+pyo3 = { version = "0.29.2", features = ["abi3-py310"] }
