@@ -60,6 +60,24 @@ Nigeria. If an event is too large for direct download, rerun with
 `--method drive` and move the files from Google Drive into
 `data/raw/global_flood_database/nigeria/`.
 
+### Predictor layers
+
+Listed in `configs/predictors.yaml` (a proposed list, to be agreed by the group).
+Each layer is read exactly as published, at its native resolution and in its
+native CRS; converting coarse layers to the 30 m grid is the experiment and
+happens in `hazres.grid`.
+
+```bash
+uv run hazres data predictors list
+uv run hazres data predictors inspect elevation --bounds 3100000 1900000 3110000 1910000
+uv run hazres data predictors inspect slope     --bounds 3100000 1900000 3110000 1910000
+```
+
+Bounds are in the analysis CRS (EPSG:3035, metres) unless `--bounds-crs` is given.
+Elevation, land cover, soil and precipitation are read window by window from the
+web; the subsurface and erosivity layers need a free account and a manual
+download (see each layer's notes).
+
 ### Datasets in use
 
 | Tier | Dataset | Hazard, region | "No hazard" labels | Access |

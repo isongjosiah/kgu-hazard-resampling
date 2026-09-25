@@ -32,6 +32,17 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--force", action="store_true", help="download again even if present")
     inspect = data_sub.add_parser("inspect", help="load a dataset and report what was kept")
     inspect.add_argument("key")
+    pred = data_sub.add_parser("predictors", help="list and inspect predictor layers")
+    pred.add_argument("--predictors", type=Path, default=Path("configs/predictors.yaml"))
+    pred_sub = pred.add_subparsers(dest="pred_command", metavar="ACTION", required=True)
+    pred_sub.add_parser("list", help="every predictor layer, its native size and status")
+    pinspect = pred_sub.add_parser("inspect", help="read one layer for an area and summarise it")
+    pinspect.add_argument("key")
+    pinspect.add_argument(
+        "--bounds", nargs=4, type=float, required=True, metavar=("LEFT", "BOTTOM", "RIGHT", "TOP"),
+        help="area to read, in --bounds-crs (default: the analysis grid CRS)",
+    )  # fmt: skip
+    pinspect.add_argument("--bounds-crs", default=None)
     gfd = data_sub.add_parser(
         "export-gfd",
         help="export Global Flood Database events for a country from Earth Engine",
@@ -65,6 +76,9 @@ def _data(args: argparse.Namespace) -> int:
                 f"{cfg.real_absences.value:<18}{files}"
             )
         return 0
+
+    if args.data_command == "predictors":
+        return _predictors(args)
 
     if args.data_command == "export-gfd":
         from hazres.data.gee import export_gfd
@@ -109,6 +123,45 @@ def _data(args: argparse.Namespace) -> int:
         print(labels.report.describe())
         return 0
     return 2
+
+
+def _predictors(args: argparse.Namespace) -> int:
+    from hazres.data.predictors import load_predictors, read_layer
+
+    reg = load_predictors(args.predictors)
+    if args.pred_command == "list":
+        print(f"{'key':<22}{'group':<12}{'kind':<12}{'status':<9}native size")
+        for key, c in reg.layers.items():
+            print(f"{key:<22}{c.group:<12}{c.kind.value:<12}{c.status:<9}{c.native_res}")
+        return 0
+
+    if args.key not in reg.layers:
+        print(f"unknown layer {args.key!r}; known: {', '.join(reg.layers)}", file=sys.stderr)
+        return 2
+    cfg = reg.layers[args.key]
+    crs = args.bounds_crs or reg.analysis_grid.crs
+    bounds = tuple(args.bounds)
+    if cfg.access == "derived":
+        import numpy as np
+
+        from hazres.data.terrain import terrain_on_grid
+        from hazres.grid.spec import GridSpec
+
+        grid = GridSpec.covering(bounds, reg.analysis_grid.crs, reg.analysis_grid.res)
+        values = terrain_on_grid(grid, reg, data_root=args.data_root)[args.key]
+        ok = values[~np.isnan(values)]
+        q = np.percentile(ok, [0, 50, 100]) if ok.size else [np.nan] * 3
+        print(f"{args.key}: {values.shape[0]:,} x {values.shape[1]:,} cells of {grid.res:g} m")
+        print(f"  {cfg.units}: min {q[0]:.4g}, median {q[1]:.4g}, max {q[2]:.4g}")
+        return 0
+    layer = read_layer(cfg, bounds, crs, data_root=args.data_root)
+    if hasattr(layer, "describe"):
+        print(layer.describe())
+    else:
+        n = len(layer.features)
+        classes = layer.features[layer.class_column].value_counts().head(8).to_dict()
+        print(f"{args.key}: {n:,} polygons; classes {classes}")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

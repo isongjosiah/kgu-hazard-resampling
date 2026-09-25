@@ -1,0 +1,304 @@
+# Predictor layers for the European (GE-LUCAS) study.
+#
+# Every layer is read exactly as published — native resolution, native CRS —
+# by hazres.data.predictors. Nothing here says how a layer reaches the analysis
+# grid: for coarse layers that is the experiment (six methods, hazres.grid).
+#
+#   kind       continuous | classes
+#   native_res as published, for reporting
+#   mechanism  why the layer can matter for gullies (reviewed by the group:
+#              no mechanism, no layer)
+#   status     open (readable now) | login (free account, download by hand)
+#              | manual (download by hand) | planned (not yet wired in)
+#   access     tiles | url | file | vector | derived
+#
+# PROPOSED LIST — to be agreed by the group before the pilot. URLs, scale
+# factors and nodata values marked "confirm" are from the product documentation
+# and are checked on the first real read.
+
+version: 1
+
+analysis_grid:
+  crs: EPSG:3035      # ETRS89-LAEA, the INSPIRE grid GE-LUCAS uses
+  res: 30
+
+layers:
+
+  # --- Terrain: 30 m, defines the grid, not part of the resampling test --------
+
+  elevation:
+    name: Copernicus DEM GLO-30
+    kind: continuous
+    units: m
+    native_res: "1 arcsec (~30 m); coarser in longitude north of 50°N"
+    group: terrain
+    mechanism: "base for slope, curvature and flow; gullies need relief and concentrated flow"
+    citation: "European Space Agency (2021), Copernicus DEM GLO-30, doi:10.5270/ESA-c5d3d65"
+    licence: "Copernicus DEM licence (free, attribution)"
+    status: open
+    access: tiles
+    tiles:
+      scheme: copernicus_dem
+      base: https://copernicus-dem-30m.s3.amazonaws.com
+    notes: >
+      One 1°x1° cloud-optimised GeoTIFF per tile, read window by window.
+      Tiles north of 50°N are wider in longitude (1.5-2 arcsec); the reader
+      merges them onto the first tile's cell size.
+
+  slope:
+    name: Slope (Horn)
+    kind: continuous
+    units: degrees
+    native_res: "30 m (from elevation)"
+    group: terrain
+    mechanism: "runoff energy; the classic gully-head threshold is slope against contributing area"
+    citation: "Horn 1981"
+    licence: derived
+    status: open
+    access: derived
+    derived_from: elevation
+
+  northness:
+    name: Northness, cos(aspect)
+    kind: continuous
+    units: "-"
+    native_res: "30 m (from elevation)"
+    group: terrain
+    mechanism: "aspect controls soil moisture and vegetation cover"
+    citation: derived
+    licence: derived
+    status: open
+    access: derived
+    derived_from: elevation
+
+  eastness:
+    name: Eastness, sin(aspect)
+    kind: continuous
+    units: "-"
+    native_res: "30 m (from elevation)"
+    group: terrain
+    mechanism: "aspect relative to prevailing rain"
+    citation: derived
+    licence: derived
+    status: open
+    access: derived
+    derived_from: elevation
+
+  profile_curvature:
+    name: Profile curvature (Zevenbergen & Thorne)
+    kind: continuous
+    units: 1/m
+    native_res: "30 m (from elevation)"
+    group: terrain
+    mechanism: "flow acceleration and deceleration along the slope"
+    citation: "Zevenbergen & Thorne 1987"
+    licence: derived
+    status: open
+    access: derived
+    derived_from: elevation
+
+  plan_curvature:
+    name: Plan curvature (Zevenbergen & Thorne)
+    kind: continuous
+    units: 1/m
+    native_res: "30 m (from elevation)"
+    group: terrain
+    mechanism: "flow convergence in hollows, where gully heads form"
+    citation: "Zevenbergen & Thorne 1987"
+    licence: derived
+    status: open
+    access: derived
+    derived_from: elevation
+
+  tpi:
+    name: Topographic position index (150 m)
+    kind: continuous
+    units: m
+    native_res: "30 m (from elevation)"
+    group: terrain
+    mechanism: "valley bottoms and hollows versus ridges"
+    citation: derived
+    licence: derived
+    status: open
+    access: derived
+    derived_from: elevation
+
+  # --- Land cover: finer than the grid ------------------------------------------
+
+  land_cover:
+    name: ESA WorldCover 2021 v200
+    kind: classes
+    units: class
+    native_res: "10 m"
+    group: land_cover
+    mechanism: "cropland and bare ground expose soil; forest and grassland protect it"
+    citation: "Zanaga et al. 2022, ESA WorldCover 10 m 2021 v200, doi:10.5281/zenodo.7254221"
+    licence: CC-BY-4.0
+    status: open
+    access: tiles
+    tiles:
+      scheme: worldcover
+      base: https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map
+    nodata: 0
+
+  # --- Soil: 250 m, converted (x8) ----------------------------------------------
+
+  clay_0_5:
+    name: SoilGrids 2.0 clay, 0-5 cm
+    kind: continuous
+    units: "%"
+    native_res: "250 m (Homolosine)"
+    group: soil
+    mechanism: "cohesion and erodibility of the topsoil"
+    citation: "Poggio et al. 2021, SOIL 7:217-240, doi:10.5194/soil-7-217-2021"
+    licence: CC-BY-4.0
+    status: open
+    access: url
+    url: https://files.isric.org/soilgrids/latest/data/clay/clay_0-5cm_mean.vrt
+    scale: 0.1         # stored as g/kg; 0.1 gives % (confirm)
+    nodata: -32768
+
+  sand_0_5:
+    name: SoilGrids 2.0 sand, 0-5 cm
+    kind: continuous
+    units: "%"
+    native_res: "250 m (Homolosine)"
+    group: soil
+    mechanism: "sandy soils are less cohesive and detach easily"
+    citation: "Poggio et al. 2021, SOIL 7:217-240, doi:10.5194/soil-7-217-2021"
+    licence: CC-BY-4.0
+    status: open
+    access: url
+    url: https://files.isric.org/soilgrids/latest/data/sand/sand_0-5cm_mean.vrt
+    scale: 0.1
+    nodata: -32768
+
+  soc_0_5:
+    name: SoilGrids 2.0 organic carbon, 0-5 cm
+    kind: continuous
+    units: g/kg
+    native_res: "250 m (Homolosine)"
+    group: soil
+    mechanism: "organic matter binds aggregates and resists detachment"
+    citation: "Poggio et al. 2021, SOIL 7:217-240, doi:10.5194/soil-7-217-2021"
+    licence: CC-BY-4.0
+    status: open
+    access: url
+    url: https://files.isric.org/soilgrids/latest/data/soc/soc_0-5cm_mean.vrt
+    scale: 0.1         # stored as dg/kg (confirm)
+    nodata: -32768
+
+  bulk_density_30_60:
+    name: SoilGrids 2.0 bulk density, 30-60 cm
+    kind: continuous
+    units: g/cm3
+    native_res: "250 m (Homolosine)"
+    group: soil
+    mechanism: "dense subsoil limits infiltration and makes the channel floor resistant"
+    citation: "Poggio et al. 2021, SOIL 7:217-240, doi:10.5194/soil-7-217-2021"
+    licence: CC-BY-4.0
+    status: open
+    access: url
+    url: https://files.isric.org/soilgrids/latest/data/bdod/bdod_30-60cm_mean.vrt
+    scale: 0.01        # stored as cg/cm3 (confirm)
+    nodata: -32768
+
+  # --- Subsurface: ~1 km, converted (x33) ---------------------------------------
+
+  soil_thickness:
+    name: Soil and sedimentary deposit thickness (Pelletier et al. 2016)
+    kind: continuous
+    units: m
+    native_res: "30 arcsec (~1 km)"
+    group: subsurface
+    mechanism: "how deep a gully can cut before it reaches resistant material"
+    citation: "Pelletier et al. 2016, JAMES 8:41-65, doi:10.1002/2015MS000526; ORNL DAAC doi:10.3334/ORNLDAAC/1304"
+    licence: "NASA open data (Earthdata login)"
+    status: login
+    access: file
+    path: predictors/pelletier_2016/average_soil_and_sedimentary-deposit_thickness.tif
+    notes: >
+      Download from ORNL DAAC dataset 1304 with a free NASA Earthdata login and
+      place it at the path above. File name to confirm on download.
+
+  water_table_depth:
+    name: Equilibrium water table depth (Fan et al. 2013)
+    kind: continuous
+    units: m
+    native_res: "30 arcsec (~1 km)"
+    group: subsurface
+    mechanism: "a shallow water table saturates soil and promotes seepage erosion at gully heads"
+    citation: "Fan, Li & Miguez-Macho 2013, Science 339:940-943, doi:10.1126/science.1229881"
+    licence: "to confirm"
+    status: manual
+    access: file
+    path: predictors/fan_2013/eurasia_wtd.tif
+    notes: >
+      Distributed per continent as NetCDF; convert the Eurasia file to GeoTIFF
+      and place it at the path above. Source and file name to confirm.
+
+  # --- Geology: map at ~1:3.75M, converted ----------------------------------------
+
+  lithology:
+    name: GLiM global lithological map v1.0
+    kind: classes
+    units: class
+    native_res: "polygons, ~1:3,750,000"
+    group: geology
+    mechanism: "rock type sets regolith depth, permeability and resistance to incision"
+    citation: "Hartmann & Moosdorf 2012, G-cubed 13:Q12004, doi:10.1029/2012GC004370"
+    licence: CC-BY-3.0
+    status: manual
+    access: vector
+    path: predictors/glim/glim.gpkg
+    class_column: xx
+    notes: >
+      Download from PANGAEA (doi:10.1594/PANGAEA.788537) and save as GeoPackage
+      at the path above. The first-level class code column is "xx" (confirm).
+      Alternative for Europe: BGR IHME1500 (1:1,500,000).
+
+  # --- Climate: 1 km and coarser, converted (x33 or more) ----------------------
+
+  annual_precipitation:
+    name: CHELSA v2.1 bio12, annual precipitation 1981-2010
+    kind: continuous
+    units: mm/yr
+    native_res: "30 arcsec (~1 km)"
+    group: climate
+    mechanism: "the water available to generate runoff"
+    citation: "Karger et al. 2017, Scientific Data 4:170122, doi:10.1038/sdata.2017.122"
+    licence: CC0-1.0
+    status: open
+    access: url
+    url: https://os.zhdk.cloud.switch.ch/chelsav2/GLOBAL/climatologies/1981-2010/bio/CHELSA_bio12_1981-2010_V.2.1.tif
+    scale: 0.1         # confirm
+    notes: "URL and scale factor to confirm on first read. E-OBS (0.1°, ~11 km) is the coarser alternative."
+
+  rainfall_erosivity:
+    name: Rainfall erosivity, R-factor (Panagos et al. 2015)
+    kind: continuous
+    units: MJ mm/(ha h yr)
+    native_res: "500 m"
+    group: climate
+    mechanism: "the intensity of rain, which drives runoff peaks that start gullies"
+    citation: "Panagos et al. 2015, Science of the Total Environment 511:801-814, doi:10.1016/j.scitotenv.2015.01.008"
+    licence: "ESDAC terms (free registration)"
+    status: login
+    access: file
+    path: predictors/esdac_erosivity/Rf_gp1.tif
+    notes: "Request from ESDAC (free registration). File name to confirm on download."
+
+  # --- Human ------------------------------------------------------------------
+
+  road_distance:
+    name: Distance to nearest road (GRIP4)
+    kind: continuous
+    units: m
+    native_res: "vector"
+    group: human
+    mechanism: "road drainage concentrates runoff and starts gullies"
+    citation: "Meijer et al. 2018, Environmental Research Letters 13:064006, doi:10.1088/1748-9326/aabd42"
+    licence: CC-BY-4.0
+    status: planned
+    access: vector
+    notes: "Computed on the grid from GRIP4 road lines; not wired in yet."
