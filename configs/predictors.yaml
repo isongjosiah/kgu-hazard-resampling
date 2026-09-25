@@ -12,9 +12,10 @@
 #              | manual (download by hand) | planned (not yet wired in)
 #   access     tiles | url | file | vector | derived
 #
-# PROPOSED LIST — to be agreed by the group before the pilot. URLs, scale
-# factors and nodata values marked "confirm" are from the product documentation
-# and are checked on the first real read.
+# PROPOSED LIST — to be agreed by the group before the pilot. The open web
+# layers (elevation, land cover, soil, precipitation) were confirmed on a first
+# real read of a 10 km area near Córdoba on 25 Sep 2026. Entries still marked
+# "confirm" are the hand-downloaded layers, checked when the files arrive.
 
 version: 1
 
@@ -170,7 +171,7 @@ layers:
     status: open
     access: url
     url: https://files.isric.org/soilgrids/latest/data/sand/sand_0-5cm_mean.vrt
-    scale: 0.1
+    scale: 0.1         # g/kg -> %. Confirmed: 16-35% near Córdoba
     nodata: -32768
 
   soc_0_5:
@@ -185,7 +186,7 @@ layers:
     status: open
     access: url
     url: https://files.isric.org/soilgrids/latest/data/soc/soc_0-5cm_mean.vrt
-    scale: 0.1         # stored as dg/kg (confirm)
+    scale: 0.1         # dg/kg -> g/kg. Confirmed: 21-40 g/kg near Córdoba
     nodata: -32768
 
   bulk_density_30_60:
@@ -200,7 +201,7 @@ layers:
     status: open
     access: url
     url: https://files.isric.org/soilgrids/latest/data/bdod/bdod_30-60cm_mean.vrt
-    scale: 0.01        # stored as cg/cm3 (confirm)
+    scale: 0.01        # cg/cm3 -> g/cm3. Confirmed: 1.53-1.63 near Córdoba
     nodata: -32768
 
   # --- Subsurface: ~1 km, converted (x33) ---------------------------------------
@@ -271,8 +272,8 @@ layers:
     status: open
     access: url
     url: https://os.zhdk.cloud.switch.ch/chelsav2/GLOBAL/climatologies/1981-2010/bio/CHELSA_bio12_1981-2010_V.2.1.tif
-    scale: 0.1         # confirm
-    notes: "URL and scale factor to confirm on first read. E-OBS (0.1°, ~11 km) is the coarser alternative."
+    scale: 0.1         # confirmed: 547-678 mm/yr near Córdoba (station normal ~600)
+    notes: "E-OBS (0.1°, ~11 km) is the coarser alternative."
 
   rainfall_erosivity:
     name: Rainfall erosivity, R-factor (Panagos et al. 2015)
