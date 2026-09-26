@@ -12,7 +12,7 @@ import pandas as pd
 from hazres import __version__, engine_version
 from hazres.compare import compare
 from hazres.data.predictors import load_predictors
-from hazres.data.registry import load_inventory
+from hazres.data.registry import InventoryConfig, load_inventory, load_registry
 from hazres.metrics.scores import scores
 from hazres.models.run import fit_variant
 from hazres.models.spatial_cv import spatial_folds
@@ -37,12 +37,30 @@ def run_experiment(exp: Experiment, paths: RunPaths | None = None, *, log=print)
     (out / "experiment.json").write_text(exp.model_dump_json(indent=2))
 
     registry = cached_registry(exp, load_predictors(paths.predictors), paths.cache_root)
-    labels = load_inventory(exp.labels, registry=paths.inventories, data_root=paths.data_root)
+    inventories = with_label_options(load_registry(paths.inventories), exp)
+    labels = load_inventory(exp.labels, registry=inventories, data_root=paths.data_root)
     log(labels.report.describe())
+    if "gully_offset_m" in labels.meta:
+        o = labels.meta["gully_offset_m"]
+        log(f"gully points placed at: {labels.meta['presence_location']} "
+            f"(real location is a median {o['median']:.0f} m from the survey point)")  # fmt: skip
 
     tables = build_tables(exp, registry, labels, data_root=paths.data_root, log=log)
     tables.save(out / "tables")
     return run_models(exp, tables, out, log=log)
+
+
+def with_label_options(
+    inventories: dict[str, InventoryConfig], exp: Experiment
+) -> dict[str, InventoryConfig]:
+    """The inventory registry with this experiment's label options applied."""
+    if not exp.label_options:
+        return inventories
+    if exp.labels not in inventories:
+        raise KeyError(f"unknown label dataset {exp.labels!r}")
+    cfg = inventories[exp.labels]
+    merged = {**cfg.options, **exp.label_options}
+    return {**inventories, exp.labels: cfg.model_copy(update={"options": merged})}
 
 
 def run_models(exp: Experiment, tables: Tables, out: Path, *, log=print) -> Path:

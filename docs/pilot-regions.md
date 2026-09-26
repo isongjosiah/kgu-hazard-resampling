@@ -26,4 +26,7 @@ Note that gully rates in these squares (8–29%) are far above the EU-wide 0.8%.
 They are hotspots, chosen so the pilot has enough gullies to learn from; the
 full run uses all points.
 
-**Needs Josiah's approval before the pilot runs.**
+**Decision (26 September 2026):** central Sicily approved and run (pilot run 1).
+After run 1, Trentino and south-east Spain were added as second and third
+pilot regions (`configs/experiments/pilot_trentino.yaml`,
+`pilot_se_spain.yaml`), so a result is not tied to one place.

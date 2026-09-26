@@ -1,0 +1,55 @@
+# Week-1 pilot, second region. North-east Italy, Trentino: mountains, mostly forest; 1,491 points, 126 gullies.
+# Same settings as pilot_sicily.yaml except the region.
+#
+# Region: central Sicily (see docs/pilot-regions.md): the most gullies of any
+# 100 km square in Spain, Portugal and Italy, and few of them are badlands.
+#
+# Only layers that can be read from the web are used, so the pilot needs no
+# accounts. Run once on a computer with internet access:
+#   uv run hazres data cache --experiment configs/experiments/pilot_trentino.yaml
+# then:
+#   uv run hazres run --experiment configs/experiments/pilot_trentino.yaml
+
+name: pilot_trentino
+region:
+  name: trentino
+  crs: EPSG:3035
+  bounds: [4400000, 2500000, 4500000, 2600000]
+  # alternatives:
+  #   south-east Spain (Guadix-Baza): [3150000, 1650000, 3250000, 1750000]
+  #   north-east Italy (Trentino):    [4400000, 2500000, 4500000, 2600000]
+
+labels: ge_lucas
+label_options:
+  # Approved 26 Sep 2026 after pilot run 1: place gully points at the gully's
+  # real location (Data 3). In central Sicily 80% of gullies are more than
+  # 30 m from their LUCAS point, i.e. in another 30 m cell.
+  presence_location: gully_location
+
+predictors:
+  fine: [elevation, slope, northness, eastness, profile_curvature, plan_curvature, tpi, land_cover]
+  coarse: [clay_0_5, sand_0_5, soc_0_5, bulk_density_30_60, annual_precipitation]
+
+grid_res: 30
+methods: [nearest, bilinear, cubic, area_weighted, downscaled]
+coarsened_factor: 33          # coarsened_target at ~1 km, reported separately
+downscale_covariates: [elevation, slope, tpi]
+
+chance:
+  n: 10
+  scales: [0.5, 1.0, 2.0]
+  seed: 20260926
+
+folds:
+  block_m: 10000
+  k: 5
+  buffer_m: 2000
+  seed: 1
+
+models: [lightgbm]
+importance_repeats: 5
+top_fraction: 0.1
+
+# science decisions, off until the group decides
+exclude_badlands: false
+field_visits_only: false

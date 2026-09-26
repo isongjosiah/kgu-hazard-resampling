@@ -72,6 +72,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--data-root", type=Path, default=DEFAULT_DATA_ROOT)
     run.add_argument("--cache-root", type=Path, default=Path("data/raw/cache"))
     run.add_argument("--out", type=Path, default=Path("outputs"))
+    summ = sub.add_parser("summary", help="model quality and verdicts across all experiments run")
+    summ.add_argument("--out", type=Path, default=Path("outputs"))
     return parser
 
 
@@ -218,6 +220,15 @@ def main(argv: list[str] | None = None) -> int:
             return _data(args)
         if args.command == "run":
             return _run(args)
+        if args.command == "summary":
+            from hazres.pipeline.summary import summarise
+
+            table = summarise(args.out)
+            if table.empty:
+                print(f"no results under {args.out}")
+                return 1
+            print(table.to_string(index=False))
+            return 0
     except (
         FileNotFoundError,
         KeyError,

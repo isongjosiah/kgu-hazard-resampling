@@ -13,7 +13,8 @@ from hazres.pipeline.tables import Tables, build_tables
 def test_pilot_config_is_valid():
     from pathlib import Path
 
-    exp = load_experiment(Path(__file__).resolve().parents[2] / "configs/experiments/pilot.yaml")
+    root = Path(__file__).resolve().parents[2] / "configs/experiments"
+    exp = load_experiment(root / "pilot_sicily.yaml")
     assert exp.region.name == "central_sicily" and exp.labels == "ge_lucas"
     assert [m.value for m in exp.methods] == [
         "nearest",
@@ -156,3 +157,40 @@ def test_end_to_end_run_writes_the_report(built, experiment, tmp_path):
     assert (
         "Is the conversion method's effect bigger than chance?" in (mdir / "report.md").read_text()
     )
+
+
+def test_all_pilot_configs_are_valid_and_use_real_gully_locations():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2] / "configs/experiments"
+    names = {}
+    for f in ("pilot_sicily.yaml", "pilot_trentino.yaml", "pilot_se_spain.yaml"):
+        exp = load_experiment(root / f)
+        assert exp.label_options == {"presence_location": "gully_location"}
+        names[exp.name] = exp.region.name
+    assert len(set(names.values())) == 3  # three different regions, three different caches
+
+
+def test_label_options_override_only_this_experiment(experiment):
+    from pathlib import Path
+
+    from hazres.data.registry import load_registry
+    from hazres.pipeline.run import with_label_options
+
+    inv = load_registry(Path(__file__).resolve().parents[2] / "configs/inventories.yaml")
+    opts = {"presence_location": "gully_location"}
+    exp = experiment.model_copy(update={"labels": "ge_lucas", "label_options": opts})
+    out = with_label_options(inv, exp)
+    assert out["ge_lucas"].options["presence_location"] == "gully_location"
+    assert out["ge_lucas"].options["presence_values"] == ["1"]  # the rest is kept
+    assert inv["ge_lucas"].options["presence_location"] == "lucas_point"  # original untouched
+    assert with_label_options(inv, experiment) is inv
+
+
+def test_summary_across_experiments(built, experiment, tmp_path):
+    from hazres.pipeline.summary import summarise
+
+    run_models(experiment, built, tmp_path / "t", log=lambda *_: None)
+    table = summarise(tmp_path)
+    assert list(table.experiment) == ["t"]
+    assert {"auc", "calibration_slope", "sensitive at x1", "sensitive at x2"} <= set(table.columns)

@@ -1,6 +1,6 @@
 """Save the predictor layers for a region, once, so runs never need the internet.
 
-``hazres data cache --experiment configs/experiments/pilot.yaml`` reads every
+``hazres data cache --experiment configs/experiments/pilot_sicily.yaml`` reads every
 layer the experiment uses for its region (plus a margin) exactly as published
 and writes it to ``data/raw/cache/<region>/<layer>.tif``, at native resolution
 and in native CRS, with a ``manifest.json`` recording where each came from.

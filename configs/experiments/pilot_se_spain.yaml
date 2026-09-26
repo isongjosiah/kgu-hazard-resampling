@@ -1,25 +1,30 @@
-# Week-1 pilot: does the conversion method change the result by more than chance?
+# Week-1 pilot, second region. South-east Spain, Guadix-Baza: dry, badlands-dominated (93 of 132 gullies).
+# Same settings as pilot_sicily.yaml except the region.
 #
-# Region: PROPOSED, awaiting approval (see docs/pilot-regions.md). Central Sicily
-# has the most gullies of any 100 km square in Spain, Portugal and Italy, and
-# few of them are badlands.
+# Region: central Sicily (see docs/pilot-regions.md): the most gullies of any
+# 100 km square in Spain, Portugal and Italy, and few of them are badlands.
 #
 # Only layers that can be read from the web are used, so the pilot needs no
 # accounts. Run once on a computer with internet access:
-#   uv run hazres data cache --experiment configs/experiments/pilot.yaml
+#   uv run hazres data cache --experiment configs/experiments/pilot_se_spain.yaml
 # then:
-#   uv run hazres run --experiment configs/experiments/pilot.yaml
+#   uv run hazres run --experiment configs/experiments/pilot_se_spain.yaml
 
-name: pilot
+name: pilot_se_spain
 region:
-  name: central_sicily
+  name: se_spain_guadix_baza
   crs: EPSG:3035
-  bounds: [4650000, 1550000, 4750000, 1650000]
+  bounds: [3150000, 1650000, 3250000, 1750000]
   # alternatives:
   #   south-east Spain (Guadix-Baza): [3150000, 1650000, 3250000, 1750000]
   #   north-east Italy (Trentino):    [4400000, 2500000, 4500000, 2600000]
 
 labels: ge_lucas
+label_options:
+  # Approved 26 Sep 2026 after pilot run 1: place gully points at the gully's
+  # real location (Data 3). In central Sicily 80% of gullies are more than
+  # 30 m from their LUCAS point, i.e. in another 30 m cell.
+  presence_location: gully_location
 
 predictors:
   fine: [elevation, slope, northness, eastness, profile_curvature, plan_curvature, tpi, land_cover]

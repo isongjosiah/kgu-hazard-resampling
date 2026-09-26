@@ -1,4 +1,4 @@
-.PHONY: setup dev check fmt lint test test-rust test-py clean
+.PHONY: setup dev check fmt lint test test-rust test-py clean pilots
 
 setup:            ## create the environment and build the Rust engine
 	uv sync
@@ -30,3 +30,12 @@ check: lint test  ## the gate: must pass before every merge
 clean:
 	cargo clean
 	rm -rf .venv .pytest_cache .ruff_cache
+
+PILOTS = pilot_sicily pilot_trentino pilot_se_spain
+
+pilots:           ## cache and run all three pilot regions, then summarise
+	@for p in $(PILOTS); do \
+		uv run hazres data cache --experiment configs/experiments/$$p.yaml && \
+		uv run hazres run --experiment configs/experiments/$$p.yaml || exit 1; \
+	done
+	uv run hazres summary

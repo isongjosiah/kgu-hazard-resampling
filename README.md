@@ -55,9 +55,12 @@ data/, outputs/       not in git
 ## Running the pilot
 
 ```bash
-uv run hazres data cache --experiment configs/experiments/pilot.yaml   # once, needs internet
-uv run hazres run        --experiment configs/experiments/pilot.yaml   # offline, ~6 minutes
+uv run hazres data cache --experiment configs/experiments/pilot_sicily.yaml   # once, needs internet
+uv run hazres run        --experiment configs/experiments/pilot_sicily.yaml   # offline, ~6 minutes
 ```
+
+Or all three pilot regions (Sicily, Trentino, south-east Spain) in one go, then a
+side-by-side summary: `make pilots` (then `uv run hazres summary` any time).
 
 The pilot region is proposed in [`docs/pilot-regions.md`](docs/pilot-regions.md)
 (awaiting approval). What each step does: [`docs/pipeline.md`](docs/pipeline.md).

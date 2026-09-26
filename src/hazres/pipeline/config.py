@@ -9,7 +9,7 @@ lives in code.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -74,6 +74,9 @@ class Experiment(BaseModel):
     name: str
     region: Region
     labels: str
+    label_options: dict[str, Any] = {}
+    """Overrides for the label dataset's options in configs/inventories.yaml, for
+    this experiment only (e.g. ``presence_location: gully_location``)."""
     predictors: Predictors
     grid_res: float = 30.0
     methods: list[Method] = [

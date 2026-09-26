@@ -4,8 +4,8 @@ Code: `src/hazres/pipeline/` (config, cache, tables, run), `src/hazres/models/`
 (spatial folds, models), `src/hazres/metrics/scores.py`, `src/hazres/compare.py`.
 
 ```bash
-uv run hazres data cache --experiment configs/experiments/pilot.yaml   # once, needs internet
-uv run hazres run        --experiment configs/experiments/pilot.yaml   # offline
+uv run hazres data cache --experiment configs/experiments/pilot_sicily.yaml   # once, needs internet
+uv run hazres run        --experiment configs/experiments/pilot_sicily.yaml   # offline
 ```
 
 Results go to `outputs/<experiment>/`: the training tables, and per model
@@ -54,3 +54,20 @@ every layer, so it is reported alongside, not in the p-value.
 On a 100 km pilot region (11 million 30 m cells, about 1,000 points) on a
 2-core machine: about 4 minutes to build the tables and 2 minutes to fit and
 score 36 variants with LightGBM; peak memory 2.7 GB.
+
+## Changes after pilot run 1 (26 September 2026)
+
+Run 1 (central Sicily) found no method effect beyond chance, but the model was
+weak (AUC 0.66–0.69; calibration slope about 0.35, i.e. far too extreme), so the
+null was not decisive. Changes, fixed before any rerun:
+
+1. **Gully points at their real location** (`label_options:
+   presence_location: gully_location` in each pilot config). In central Sicily
+   80% of gullies are more than 30 m from their LUCAS survey point.
+2. **Gentler LightGBM settings** for a few thousand points: 200 trees, learning
+   rate 0.03, 15 leaves, depth 4, at least 30 points per leaf, stronger
+   regularisation. Random forest leaves need at least 10 points. Chosen to stop
+   overfitting, not tuned on the method comparison.
+3. **Two more regions** (Trentino, south-east Spain), and `hazres summary` to
+   put all runs side by side. The Sicily experiment is now called
+   `pilot_sicily`, so run 1's outputs (`outputs/pilot/`) are kept for comparison.

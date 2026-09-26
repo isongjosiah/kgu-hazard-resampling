@@ -28,10 +28,15 @@ class LightGBMModel:
         import lightgbm as lgb
 
         self.categorical = categorical
+        # Conservative settings for samples of a few thousand points. Changed after
+        # pilot run 1 (26 Sep 2026), where the first settings (300 trees, 31 leaves)
+        # overfitted about 750 training points: calibration slope 0.35. Fixed in
+        # advance for every variant; not tuned on the method comparison.
         self.model = lgb.LGBMClassifier(
-            n_estimators=300, learning_rate=0.05, num_leaves=31, min_child_samples=20,
-            subsample=0.8, subsample_freq=1, colsample_bytree=0.8, reg_lambda=1.0,
-            random_state=seed, n_jobs=1, verbose=-1, deterministic=True, force_row_wise=True,
+            n_estimators=200, learning_rate=0.03, num_leaves=15, max_depth=4,
+            min_child_samples=30, subsample=0.8, subsample_freq=1, colsample_bytree=0.8,
+            reg_lambda=5.0, random_state=seed, n_jobs=1, verbose=-1, deterministic=True,
+            force_row_wise=True,
         )  # fmt: skip
 
     def _prep(self, X: pd.DataFrame) -> pd.DataFrame:  # noqa: N803
@@ -70,7 +75,7 @@ def make_model(name: str, features: list[str], categorical: list[str], seed: int
         return LightGBMModel(seed, categorical)
     if name == "random_forest":
         clf = RandomForestClassifier(
-            n_estimators=500, min_samples_leaf=5, max_features="sqrt", n_jobs=1, random_state=seed
+            n_estimators=500, min_samples_leaf=10, max_features="sqrt", n_jobs=1, random_state=seed
         )
         return Pipeline([("prep", _tabular(numeric, categorical, scale=False)), ("model", clf)])
     clf = LogisticRegression(C=1.0, max_iter=2000)
