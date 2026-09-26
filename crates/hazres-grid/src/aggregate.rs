@@ -140,10 +140,10 @@ pub fn block_majority(
         .collect())
 }
 
-// `%` rather than `is_multiple_of`, which needs Rust 1.87; the workspace supports 1.83.
-#[allow(clippy::manual_is_multiple_of)]
+// `% f > 0` rather than `is_multiple_of` (needs Rust 1.87; the workspace supports 1.83),
+// written so that neither older nor newer clippy flags it.
 fn check_blocks(n: usize, rows: usize, cols: usize, f: usize) -> Result<(), String> {
-    if f == 0 || rows % f != 0 || cols % f != 0 {
+    if f == 0 || rows % f > 0 || cols % f > 0 {
         return Err(format!(
             "{rows}x{cols} grid is not divisible into {f}x{f} blocks"
         ));
