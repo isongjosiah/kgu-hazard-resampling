@@ -94,7 +94,7 @@ class Realisations:
 
     key: str
     values: np.ndarray
-    """Shape (n, rows, cols) on the grid."""
+    """Shape (n, rows, cols) on the grid, or (n, n_points) if points were given."""
     base: np.ndarray
     detail: Detail
     seed: int
@@ -120,12 +120,17 @@ def realise(
     scale: float = 1.0,
     covariates: dict[str, np.ndarray] | None = None,
     seed: int = 20260926,
+    points: tuple[np.ndarray, np.ndarray] | None = None,
 ) -> Realisations:
     """Make ``n`` fine-scale versions of ``layer`` on ``grid``.
 
     ``detail`` defaults to :func:`estimate_detail`; ``scale`` multiplies its
     strength (use 0.5, 1 and 2 to test the assumption). With ``covariates`` the
     base is the downscaled field instead of bilinear.
+
+    With ``points=(rows, cols)`` only the values at those grid cells are kept,
+    so ``values`` has shape (n, n_points): large grids never hold all versions
+    in memory at once.
     """
     if layer.kind is not Kind.CONTINUOUS:
         raise NotImplementedError(f"{layer.key}: realisations for class layers are not built yet")
@@ -150,7 +155,11 @@ def realise(
     )
 
     corr_cells = detail.correlation_m / grid.res
-    out = np.empty((n, rows, cols), dtype=np.float32)
+    if points is not None:
+        pr, pc = (np.asarray(a, dtype=np.int64) for a in points)
+        out = np.empty((n, pr.size), dtype=np.float32)
+    else:
+        out = np.empty((n, rows, cols), dtype=np.float32)
     for i in range(n):
         noise = gaussian_field((rows, cols), corr_cells, _seed(seed, layer.key, i), pad=True)
         noise = np.ascontiguousarray(noise.ravel(), dtype=np.float32)
@@ -167,7 +176,8 @@ def realise(
         version = _engine.match_zone_means(
             np.ascontiguousarray(base + within, dtype=np.float32), zones, target
         )
-        out[i] = version.reshape(rows, cols)
+        version = version.reshape(rows, cols)
+        out[i] = version[pr, pc] if points is not None else version
 
     return Realisations(layer.key, out, base.reshape(rows, cols), detail, seed, zones)
 

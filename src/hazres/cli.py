@@ -43,6 +43,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="area to read, in --bounds-crs (default: the analysis grid CRS)",
     )  # fmt: skip
     pinspect.add_argument("--bounds-crs", default=None)
+    cache = data_sub.add_parser(
+        "cache", help="save an experiment's predictor layers for its region (needs internet, once)"
+    )
+    cache.add_argument("--experiment", type=Path, required=True)
+    cache.add_argument("--predictors", type=Path, default=Path("configs/predictors.yaml"))
+    cache.add_argument("--cache-root", type=Path, default=Path("data/raw/cache"))
+    cache.add_argument("--force", action="store_true", help="read again even if cached")
     gfd = data_sub.add_parser(
         "export-gfd",
         help="export Global Flood Database events for a country from Earth Engine",
@@ -58,7 +65,40 @@ def build_parser() -> argparse.ArgumentParser:
     gfd.add_argument("--drive-folder", default="hazres_gfd")
     gfd.add_argument("--project", help="Google Cloud project registered for Earth Engine")
     gfd.add_argument("--force", action="store_true", help="export again even if the file exists")
+    run = sub.add_parser("run", help="run an experiment: tables, models, comparison, report")
+    run.add_argument("--experiment", type=Path, required=True)
+    run.add_argument("--predictors", type=Path, default=Path("configs/predictors.yaml"))
+    run.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    run.add_argument("--data-root", type=Path, default=DEFAULT_DATA_ROOT)
+    run.add_argument("--cache-root", type=Path, default=Path("data/raw/cache"))
+    run.add_argument("--out", type=Path, default=Path("outputs"))
     return parser
+
+
+def _run(args: argparse.Namespace) -> int:
+    from hazres.pipeline.config import load_experiment
+    from hazres.pipeline.run import RunPaths, run_experiment
+
+    exp = load_experiment(args.experiment)
+    paths = RunPaths(args.predictors, args.registry, args.data_root, args.cache_root, args.out)
+    out = run_experiment(exp, paths)
+    print(f"done: {out}")
+    return 0
+
+
+def _cache(args: argparse.Namespace) -> int:
+    from hazres.data.predictors import load_predictors
+    from hazres.pipeline.cache import cache_region
+    from hazres.pipeline.config import load_experiment
+
+    exp = load_experiment(args.experiment)
+    reg = load_predictors(args.predictors)
+    results = cache_region(exp, reg, data_root=args.data_root, cache_root=args.cache_root,
+                           force=args.force)  # fmt: skip
+    for r in results:
+        print(f"{r.status:<9}{r.key:<22}{r.path or ''} {r.note}")
+    skipped = [r.key for r in results if r.status == "skipped"]
+    return 1 if skipped else 0
 
 
 def _data(args: argparse.Namespace) -> int:
@@ -79,6 +119,9 @@ def _data(args: argparse.Namespace) -> int:
 
     if args.data_command == "predictors":
         return _predictors(args)
+
+    if args.data_command == "cache":
+        return _cache(args)
 
     if args.data_command == "export-gfd":
         from hazres.data.gee import export_gfd
@@ -173,6 +216,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "data":
             return _data(args)
+        if args.command == "run":
+            return _run(args)
     except (
         FileNotFoundError,
         KeyError,

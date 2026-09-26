@@ -297,7 +297,10 @@ def read_layer(
                     raise FileNotFoundError(_missing(cfg, s)) from None
                 missing_tiles.append(s)  # tiles over sea do not exist
         if not datasets:
-            raise FileNotFoundError(f"{cfg.key}: no tiles found for this area")
+            raise FileNotFoundError(
+                f"{cfg.key}: could not open any of the {len(sources)} tiles for this area "
+                "(no internet access to the tile server, or the area is all sea)"
+            )
 
         first = datasets[0]
         src_bounds = transform_bounds(bounds_crs, first.crs, *bounds, densify_pts=21)

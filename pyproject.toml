@@ -13,13 +13,16 @@ authors = [{ name = "Josiah Ayoola Isong" }]
 dependencies = [
     "affine>=2.4",
     "geopandas>=1.0",
+    "lightgbm>=4.3",
     "numpy>=1.26",
     "pandas>=2.1",
+    "pyarrow>=15",
     "pydantic>=2.6",
     "pyogrio>=0.9",
     "pyproj>=3.6",
     "pyyaml>=6",
     "rasterio>=1.4",
+    "scikit-learn>=1.4",
     "scipy>=1.11",
     "shapely>=2.0",
 ]
@@ -66,3 +69,5 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "NPY"]
+# X for a feature matrix is the usual convention in ML code
+ignore = ["N803", "N806"]

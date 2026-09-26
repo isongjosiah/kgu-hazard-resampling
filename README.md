@@ -43,6 +43,7 @@ src/hazres/
   grid/               2. bring predictors onto one grid (wraps the Rust engine)
   models/             3. models and spatial cross-validation
   metrics/            4. measure each run
+  pipeline/           experiment config, region cache, training tables, runs
   compare.py          5. between-method spread vs chance
   report/             6. report, agreement map, methods paragraph
   cli.py              the `hazres` command
@@ -50,6 +51,17 @@ tests/                Python tests, one file per module
 configs/              every choice, as YAML
 data/, outputs/       not in git
 ```
+
+## Running the pilot
+
+```bash
+uv run hazres data cache --experiment configs/experiments/pilot.yaml   # once, needs internet
+uv run hazres run        --experiment configs/experiments/pilot.yaml   # offline, ~6 minutes
+```
+
+The pilot region is proposed in [`docs/pilot-regions.md`](docs/pilot-regions.md)
+(awaiting approval). What each step does: [`docs/pipeline.md`](docs/pipeline.md).
+The chance check and its assumption: [`docs/chance-check.md`](docs/chance-check.md).
 
 ## Setup
 
