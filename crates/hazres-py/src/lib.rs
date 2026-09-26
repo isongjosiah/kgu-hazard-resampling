@@ -28,12 +28,12 @@ fn same_len(a: usize, b: usize) -> PyResult<()> {
     }
 }
 
-fn to_2d<'py, T: numpy::Element>(
-    py: Python<'py>,
+fn to_2d<T: numpy::Element>(
+    py: Python<'_>,
     v: Vec<T>,
     rows: usize,
     cols: usize,
-) -> PyResult<Bound<'py, PyArray2<T>>> {
+) -> PyResult<Bound<'_, PyArray2<T>>> {
     v.into_pyarray(py).reshape([rows, cols])
 }
 

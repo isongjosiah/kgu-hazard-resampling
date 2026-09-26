@@ -1,0 +1,5 @@
+# Everyone (and CI) builds with the same Rust, so clippy gives the same answers
+# on every machine. rustup installs this version automatically on first use.
+[toolchain]
+channel = "1.95.0"
+components = ["rustfmt", "clippy"]

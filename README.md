@@ -62,8 +62,7 @@ uv run hazres run        --experiment configs/experiments/pilot_sicily.yaml   # 
 Or all three pilot regions (Sicily, Trentino, south-east Spain) in one go, then a
 side-by-side summary: `make pilots` (then `uv run hazres summary` any time).
 
-The pilot region is proposed in [`docs/pilot-regions.md`](docs/pilot-regions.md)
-(awaiting approval). What each step does: [`docs/pipeline.md`](docs/pipeline.md).
+Pilot results so far: [`docs/pilot-run-2.md`](docs/pilot-run-2.md). The pilot regions are described in [`docs/pilot-regions.md`](docs/pilot-regions.md). What each step does: [`docs/pipeline.md`](docs/pipeline.md).
 The chance check and its assumption: [`docs/chance-check.md`](docs/chance-check.md).
 
 ## Setup
