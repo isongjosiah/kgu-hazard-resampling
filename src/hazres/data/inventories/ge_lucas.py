@@ -13,6 +13,13 @@ signs of gully erosion?", 1 = Yes, 2 = No. The registry sets this explicitly.
 Six columns start with ``SURVEY_GULLY_``, so the column is never guessed from
 a pattern when that name is present.
 
+**Where the gully is.** A gully is recorded at the LUCAS point from which it
+was seen, but ``Data 3`` gives the gully's own location: a median of 30 m
+away, more than 30 m for half of them and more than 100 m for 13%, so often in
+a different 30 m cell. ``options.presence_location`` chooses which is used:
+``lucas_point`` (default) or ``gully_location``. The choice is left to the
+group; the distances are reported either way.
+
 The loader still refuses to run until ``options.presence_values`` and
 ``options.absence_values`` are set, and prints the codes it found, so a change
 in a future release of the file cannot slip through. Values in neither list
@@ -61,6 +68,29 @@ def _read_csv(path: Path, **kwargs) -> pd.DataFrame:
         except UnicodeDecodeError:
             continue
     raise ValueError(f"{path}: could not decode as UTF-8 or Latin-1")
+
+
+def read_zipped_shapefile(path: Path):
+    """Read the single shapefile inside a zip, even when it sits in a subfolder."""
+    import geopandas as gpd
+
+    shp = [n for n in zipfile.ZipFile(path).namelist() if n.lower().endswith(".shp")]
+    if len(shp) != 1:
+        raise ValueError(f"{path.name}: expected one shapefile inside, found {shp}")
+    return gpd.read_file(f"/vsizip/{path.resolve()}/{shp[0]}")
+
+
+def _gully_locations(cfg: InventoryConfig, data_root: Path, target_crs) -> gpd.GeoSeries:
+    """Real gully locations (Data 3), indexed by POINT_ID, in ``target_crs``."""
+    path = cfg.file("gully_locations", data_root)
+    g = read_zipped_shapefile(path) if path.suffix.lower() == ".zip" else gpd.read_file(path)
+    if g.crs is None:
+        raise ValueError(f"{path.name} has no CRS")
+    g = g.to_crs(target_crs)
+    g["POINT_ID"] = g["POINT_ID"].astype(str)
+    if g["POINT_ID"].duplicated().any():
+        raise ValueError(f"{path.name}: POINT_ID is not unique")
+    return g.set_index("POINT_ID").geometry
 
 
 def _presence_column(columns: list[str], override: str | None) -> str:
@@ -149,6 +179,34 @@ def load(cfg: InventoryConfig, data_root: Path) -> VectorLabels:
         crs="EPSG:4326",
     ).to_crs(cfg.crs or "EPSG:3035")
 
+    location = opts.get("presence_location", "lucas_point")
+    meta_extra: dict = {"presence_location": location}
+    if location not in ("lucas_point", "gully_location"):
+        raise ValueError(f"{cfg.key}: presence_location must be lucas_point or gully_location")
+    if cfg.optional_file("gully_locations", data_root) is not None:
+        real = _gully_locations(cfg, data_root, gdf.crs)
+        pos = gdf["label"] == PRESENCE
+        ids = gdf.loc[pos, "sample_id"]
+        found = ids.isin(real.index)
+        if not found.all():
+            warnings.append(f"{int((~found).sum()):,} gully points have no location in Data 3")
+        matched = ids[found]
+        dist = gdf.loc[matched.index].geometry.distance(real.loc[matched].set_axis(matched.index))
+        gdf["offset_m"] = np.nan
+        gdf.loc[matched.index, "offset_m"] = dist.to_numpy()
+        meta_extra["gully_offset_m"] = {
+            "median": float(dist.median()),
+            "share_over_30m": float((dist > 30).mean()),
+            "share_over_100m": float((dist > 100).mean()),
+        }
+        if location == "gully_location":
+            gdf.loc[matched.index, "geometry"] = real.loc[matched].to_numpy()
+    elif location == "gully_location":
+        raise FileNotFoundError(
+            f"{cfg.key}: presence_location is gully_location but Data 3 is missing "
+            f"(run: hazres data fetch {cfg.key})"
+        )
+
     n_pos = int((gdf["label"] == PRESENCE).sum())
     n_neg = int((gdf["label"] == ABSENCE).sum())
     expected = opts.get("expected_presences")
@@ -164,5 +222,5 @@ def load(cfg: InventoryConfig, data_root: Path) -> VectorLabels:
         features=gdf.reset_index(drop=True),
         absence_kind=cfg.real_absences,
         report=report,
-        meta={"presence_column": presence_col, "source_file": path.name},
+        meta={"presence_column": presence_col, "source_file": path.name, **meta_extra},
     )

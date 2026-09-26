@@ -61,6 +61,10 @@ inventories:
       presence_values: ["1"]
       absence_values: ["2"]
       expected_presences: 3116
+      # Where a gully point sits: lucas_point (where it was seen from) or
+      # gully_location (Data 3: the gully itself, median 30 m away, >30 m for half).
+      # Science decision for the group; the default keeps the LUCAS point.
+      presence_location: lucas_point
       # POINT_NUTS0: country, for leave-country-out folds.
       # SURVEY_OBS_TYPE: how the point was checked (1-2 field visit, 3 photo-
       #   interpretation in the field, 7 photo-interpretation in the office);
