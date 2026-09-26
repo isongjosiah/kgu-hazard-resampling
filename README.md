@@ -6,6 +6,33 @@ Hazard maps combine data at very different resolutions, from 10 m satellite imag
 
 **Status:** early development. Nothing here is a result yet.
 
+## The six conversion methods
+
+Each method is a different, reasonable way to spread one coarse value (say, one
+1 km rainfall cell) over the roughly 1,100 cells of 30 m it covers. Each makes a
+different assumption about what the land looks like inside the coarse cell, and
+each is something researchers actually do.
+
+| # | Method | What each 30 m cell gets | Assumption | Why we test it | Class maps? |
+|---|---|---|---|---|---|
+| 1 | `nearest` | The value of the coarse cell it sits in | Nothing changes inside a coarse cell; values jump at its edges | Simplest, most common; default in many GIS tools | Yes |
+| 2 | `bilinear` | A linear blend of the 4 nearest coarse cell centres | Values change gradually between cell centres | The usual choice for continuous data | No |
+| 3 | `cubic` | A smooth blend of the 16 nearest centres (Keys) | Values change smoothly and can curve; may overshoot | The third common GIS option; looks realistic but can invent peaks | No |
+| 4 | `area_weighted` | The coarse cells it overlaps, weighted by overlap (classes: the class covering most of it) | Like nearest, softened at edges; totals kept exactly | The careful "keep the amounts right" choice | Yes |
+| 5 | `downscaled` | Detail from fine layers (e.g. terrain), shifted so each coarse cell keeps its published mean | The coarse value varies with the landscape | Used in climate and soil mapping; terrain used only if the fit passes an F-test (p < 0.05) | No |
+| 6 | `coarsened_target` | Nothing: labels and fine layers go *up* to the coarse grid instead | Don't claim detail you don't have | Model at the scale the data support | Yes |
+
+**Why these six.** Methods 1–3 are what most published hazard maps use, usually
+without saying which; 4 is what careful GIS users choose; 5 and 6 are what
+statisticians recommend. Together they run from "flat inside each cell" to
+"smooth", "follow the landscape" and "don't pretend". If all six give the same
+map, the choice does not matter for that study; if they disagree, it does, and
+the chance check says whether the disagreement is bigger than chance.
+
+`block_mean`, in the first plan, is not included: going from coarse to fine it
+gives exactly the same result as `nearest`. Details, conventions and tests:
+[`docs/grid-methods.md`](docs/grid-methods.md).
+
 ## Layout
 
 ```
