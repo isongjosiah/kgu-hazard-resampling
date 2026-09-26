@@ -32,6 +32,7 @@ import numpy as np
 from affine import Affine
 
 from hazres.data.labels import AbsenceKind, LoadReport, VectorLabels
+from hazres.grid.fields import gaussian_field
 
 Kind = Literal["continuous", "classes"]
 
@@ -106,16 +107,6 @@ class SyntheticStudy:
             name, kind, self.observed[name].astype(dtype), self.observed_transform(name),
             self.crs, "synthetic",
         )  # fmt: skip
-
-
-def gaussian_field(shape: tuple[int, int], correlation_cells: float, rng) -> np.ndarray:
-    """A smooth random field with mean 0 and standard deviation 1 (FFT, periodic edges)."""
-    noise = rng.standard_normal(shape)
-    ky = np.fft.fftfreq(shape[0])[:, None]
-    kx = np.fft.rfftfreq(shape[1])[None, :]
-    kernel = np.exp(-2.0 * (np.pi * correlation_cells) ** 2 * (kx**2 + ky**2))
-    field_ = np.fft.irfft2(np.fft.rfft2(noise) * kernel, s=shape)
-    return (field_ - field_.mean()) / field_.std()
 
 
 def block_mean(a: np.ndarray, f: int) -> np.ndarray:
